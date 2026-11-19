@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fil">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -15,7 +15,7 @@
   <button id="login" type="button">Log-in</button>
 </div>
 
-  <dialog id="loginbox" aria-labelledby="ltitle">
+<dialog id="loginbox" aria-labelledby="ltitle">
   <form id="loginform">
     <b id="ltitle">Log-in</b>
     <input class="search" id="em" type="email" placeholder="Email" aria-label="Email" autocomplete="username" required>
@@ -27,9 +27,9 @@
     </div>
   </form>
 </dialog>
+
 <p class="err" id="msg" role="alert"></p>
-<div class="tabs" role="group" aria-label="Pumili ng view" id="tabs">
-</div>
+<div class="tabs" role="group" aria-label="Choose a view" id="tabs"></div>
 
 <section id="view-songs">
   <p class="hide" id="addsong"><button class="primary" id="addsongbtn" type="button">+ Add New Song</button></p>
@@ -41,7 +41,7 @@
 <section id="view-steps" class="hide">
   <div class="card hide" id="stepform"><b>New Step</b><div class="filter" style="margin:8px 0 0">
     <input class="search" id="sn" placeholder="Name (ex. Hallelujah A)" aria-label="Name of the step">
-    <input class="search" id="sc" placeholder="Short (ex. Hal A)" maxlength="4" aria-label="Short version" style="max-width:100px">
+    <input class="search" id="sc" placeholder="Short (ex. Hal A)" maxlength="8" aria-label="Abbreviation" style="max-width:120px">
     <button class="primary" id="sadd" type="button">Add</button>
   </div>
   </div>
@@ -65,13 +65,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-/* ILAGAY DITO ANG SA SUPABASE MO: Project Settings > API */
+/* Put your Supabase values here: Project Settings > API Keys */
 var SUPABASE_URL="https://gdbwuoyluexmuwrmrmxz.supabase.co";
 var SUPABASE_KEY="sb_publishable_naZ7MVa6whcAQ6jPFbFrHg_ncTl71UI";
 
 var sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 var ORDER=["I","V","PC","C","PoC","B"],FULL={I:"Instrumental",V:"Verse",PC:"Pre-chorus",C:"Chorus",PoC:"Post-chorus",B:"Bridge"},OPT={I:1,PC:1,PoC:1};
-var STEPS=[],S={},SONGS=[],user=null,view="songs",cat="Lahat",openId=null,editId=null,draft=null,sched=[];
+var STEPS=[],S={},SONGS=[],user=null,view="songs",cat="All",openId=null,editId=null,draft=null,sched=[];
 try{sched=JSON.parse(localStorage.getItem("sched")||"[]")}catch(e){}
 var $=function(i){return document.getElementById(i)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -82,7 +82,7 @@ function okUrl(u){return /^https?:\/\//i.test(u)}
 
 async function load(){
   var a=await sb.from("steps").select("*").order("name"),b=await sb.from("songs").select("*").order("title");
-  if(a.error||b.error){msg("Hindi ma-load ang data: "+(a.error||b.error).message);return}
+  if(a.error||b.error){msg("Could not load data: "+(a.error||b.error).message);return}
   STEPS=a.data;S={};STEPS.forEach(function(x){S[x.id]=x});SONGS=b.data;
   sched=sched.filter(function(id){return song(id)});
   msg("");renderAll();
@@ -91,7 +91,7 @@ function renderAll(){renderSongs();renderLib();renderSched()}
 
 /* tabs */
 function renderTabs(){
-  var h=[["songs","Kanta"],["steps","Steps library"],["sched","Schedule / PDF"]].map(function(x){return'<button type="button" data-v="'+x[0]+'" aria-pressed="'+(view===x[0])+'">'+x[1]+"</button>"}).join("");
+  var h=[["songs","Songs"],["steps","Steps library"],["sched","Schedule / PDF"]].map(function(x){return'<button type="button" data-v="'+x[0]+'" aria-pressed="'+(view===x[0])+'">'+x[1]+"</button>"}).join("");
   $("tabs").innerHTML=h;
   ["songs","steps","sched"].forEach(function(v){$("view-"+v).classList.toggle("hide",v!==view)});
 }
@@ -99,39 +99,44 @@ $("tabs").addEventListener("click",function(e){var b=e.target.closest("button");
 
 /* login */
 function applyUser(){
-  $("who").textContent=user?"Naka-login: "+(user.email||"editor"):"Hindi naka-login (view only)";
-  $("login").textContent=user?"Mag-logout":"Mag-login";
-  $("loginbox").classList.add("hide");
+  $("who").textContent=user?"Logged in: "+(user.email||"editor"):"Guest (view only)";
+  $("login").textContent=user?"Log-out":"Log-in";
+  if($("loginbox").open)$("loginbox").close();
   ["addsong","stepform"].forEach(function(i){$(i).classList.toggle("hide",!user)});
   if(!user)$("songform").classList.add("hide");
   renderAll();
 }
-$("login").onclick=async function(){if(user){await sb.auth.signOut()}else $("loginbox").classList.toggle("hide")};
-$("go").onclick=async function(){
-  var r=await sb.auth.signInWithPassword({email:$("em").value.trim(),password:$("pw").value});
-  if(r.error){msg("Hindi nakapasok: "+r.error.message);return}
-  msg("");$("pw").value="";
+$("login").onclick=async function(){
+  if(user){await sb.auth.signOut()}
+  else{$("lerr").textContent="";$("loginbox").showModal()}
 };
+$("loginform").addEventListener("submit",async function(e){
+  e.preventDefault();
+  var r=await sb.auth.signInWithPassword({email:$("em").value.trim(),password:$("pw").value});
+  if(r.error){$("lerr").textContent="Could not log in: "+r.error.message;return}
+  $("lerr").textContent="";$("pw").value="";$("loginbox").close();
+});
+$("closelogin").onclick=function(){$("loginbox").close()};
 sb.auth.onAuthStateChange(function(ev,s){user=s?s.user:null;applyUser()});
 
 /* songs */
-var CATS=["Lahat","Praise ENG","Praise TAG","Worship ENG","Worship TAG"];
+var CATS=["All","Praise ENG","Praise TAG","Worship ENG","Worship TAG"];
 CATS.forEach(function(c){$("cat").add(new Option(c,c))});
 $("cat").onchange=function(){cat=this.value;openId=null;renderSongs()};
 function stepPills(ids){return ids.map(function(id){var s=S[id];return s?'<span class="pill"><i>'+esc(s.short)+"</i>"+esc(s.name)+"</span>":""}).join("")}
 function renderSongs(){
   var h="";
   SONGS.forEach(function(x){
-    if(cat!=="Lahat"&&cat!==x.cat+" "+x.lang)return;
+    if(cat!=="All"&&cat!==x.cat+" "+x.lang)return;
     var o=openId===x.id,body="";
     if(o){
-      body+='<p style="margin:10px 0 0">'+(okUrl(x.link)?'<a class="link" href="'+esc(x.link)+'" target="_blank" rel="noopener">Pakinggan (YouTube/Spotify)</a>':'<span class="m">Walang link</span>')+(user?' <button class="small" type="button" data-edit="'+x.id+'">Edit</button>':"")+"</p>";
+      body+='<p style="margin:10px 0 0">'+(okUrl(x.link)?'<a class="link" href="'+esc(x.link)+'" target="_blank" rel="noopener">Listen (YouTube/Spotify)</a>':'<span class="m">No link</span>')+(user?' <button class="small" type="button" data-edit="'+x.id+'">Edit</button>':"")+"</p>";
       ORDER.forEach(function(k){var a=x.sec&&x.sec[k];if(a&&a.length)body+='<div class="sec"><b>'+k+"</b><div>"+stepPills(a)+"</div></div>"});
       if(x.lyrics)body+='<details class="lyr"><summary>Lyrics</summary><pre>'+esc(x.lyrics)+"</pre></details>";
     }
     h+='<div class="card"><button class="song-head" type="button" aria-expanded="'+o+'" data-id="'+x.id+'"><span class="t">'+esc(x.title)+'</span><span class="m">'+esc(x.singer)+" \u00b7 "+x.cat+" "+x.lang+"</span></button>"+body+"</div>";
   });
-  $("songs").innerHTML=h||'<p class="m">Walang kanta pa.</p>';
+  $("songs").innerHTML=h||'<p class="m">No songs yet.</p>';
 }
 $("songs").addEventListener("click",function(e){
   var ed=e.target.closest("[data-edit]");if(ed){openForm(Number(ed.dataset.edit));return}
@@ -151,16 +156,16 @@ $("addsongbtn").onclick=function(){openForm(null)};
 function drawForm(err){
   var opts=STEPS.map(function(s){return'<option value="'+s.id+'">'+esc(s.name)+" ("+esc(s.short)+")</option>"}).join("");
   var sel=function(f,a){return'<select data-f="'+f+'" aria-label="'+f+'">'+a.map(function(v){return"<option"+(draft[f]===v?" selected":"")+">"+v+"</option>"}).join("")+"</select>"};
-  var h="<b>"+(editId===null?"Bagong kanta":"I-edit ang kanta")+"</b>"+
+  var h="<b>"+(editId===null?"New song":"Edit song")+"</b>"+
    '<input class="search" data-f="title" placeholder="Title" aria-label="Title" value="'+esc(draft.title)+'" style="margin-top:8px">'+
    '<input class="search" data-f="singer" placeholder="Singer" aria-label="Singer" value="'+esc(draft.singer)+'" style="margin-top:8px">'+
    '<div class="filter" style="margin:8px 0">'+sel("cat",["Praise","Worship"])+sel("lang",["ENG","TAG"])+"</div>"+
-   '<input class="search" data-f="link" placeholder="YouTube o Spotify link" aria-label="Link" value="'+esc(draft.link)+'">'+
+   '<input class="search" data-f="link" placeholder="YouTube or Spotify link" aria-label="Link" value="'+esc(draft.link)+'">'+
    '<textarea class="search" data-f="lyrics" placeholder="Lyrics" aria-label="Lyrics" style="margin-top:8px">'+esc(draft.lyrics)+"</textarea>";
   ORDER.forEach(function(k){var a=draft.sec[k]||[];
-    h+='<div class="fs"><b>'+FULL[k]+(OPT[k]?' <span class="m">(optional)</span>':"")+"</b><div>"+a.map(function(id,n){var s=S[id];return s?'<span class="pill"><i>'+esc(s.short)+"</i>"+esc(s.name)+' <button class="x" type="button" data-rm="'+k+":"+n+'" aria-label="Alisin ang step">\u2715</button></span>':""}).join("")+'</div><select data-add="'+k+'" aria-label="Dagdag na step sa '+FULL[k]+'"><option value="">+ Dagdag na step</option>'+opts+"</select></div>";
+    h+='<div class="fs"><b>'+FULL[k]+(OPT[k]?' <span class="m">(optional)</span>':"")+"</b><div>"+a.map(function(id,n){var s=S[id];return s?'<span class="pill"><i>'+esc(s.short)+"</i>"+esc(s.name)+' <button class="x" type="button" data-rm="'+k+":"+n+'" aria-label="Remove step">\u2715</button></span>':""}).join("")+'</div><select data-add="'+k+'" aria-label="Add a step to '+FULL[k]+'"><option value="">+ Add a step</option>'+opts+"</select></div>";
   });
-  h+=(err?'<p class="err" role="alert">'+esc(err)+"</p>":"")+'<p><button class="primary" id="save" type="button">I-save</button> <button id="cancel" type="button">Cancel</button>'+(editId!==null?' <button id="del" type="button">Burahin</button>':"")+"</p>";
+  h+=(err?'<p class="err" role="alert">'+esc(err)+"</p>":"")+'<p><button class="primary" id="save" type="button">Save</button> <button id="cancel" type="button">Cancel</button>'+(editId!==null?' <button id="del" type="button">Delete</button>':"")+"</p>";
   $("songform").innerHTML=h;
 }
 $("songform").addEventListener("input",function(e){var f=e.target.dataset.f;if(f)draft[f]=e.target.value});
@@ -170,20 +175,20 @@ $("songform").addEventListener("click",async function(e){
   if(b.dataset.rm){var p=b.dataset.rm.split(":");draft.sec[p[0]].splice(Number(p[1]),1);drawForm("");return}
   if(b.id==="cancel"){$("songform").classList.add("hide");return}
   if(b.id==="del"){
-    if(!confirm("Burahin ang kanta na ito?"))return;
+    if(!confirm("Delete this song?"))return;
     var r=await sb.from("songs").delete().eq("id",editId);
-    if(r.error){drawForm("Hindi nabura: "+r.error.message);return}
+    if(r.error){drawForm("Could not delete: "+r.error.message);return}
     $("songform").classList.add("hide");openId=null;await load();return;
   }
   if(b.id==="save"){
     var d=draft;
-    if(!d.title.trim()){drawForm("Ilagay ang title.");return}
+    if(!d.title.trim()){drawForm("Enter a title.");return}
     var miss=["V","C","B"].filter(function(k){return !(d.sec[k]&&d.sec[k].length)});
-    if(miss.length){drawForm("Dagdagan ng steps ang: "+miss.map(function(k){return FULL[k]}).join(", ")+".");return}
+    if(miss.length){drawForm("Add steps to: "+miss.map(function(k){return FULL[k]}).join(", ")+".");return}
     Object.keys(d.sec).forEach(function(k){if(!d.sec[k].length)delete d.sec[k]});
     var row={title:d.title.trim(),singer:d.singer.trim(),cat:d.cat,lang:d.lang,link:d.link.trim(),lyrics:d.lyrics,sec:d.sec};
     var q=editId===null?await sb.from("songs").insert(row):await sb.from("songs").update(row).eq("id",editId);
-    if(q.error){drawForm("Hindi na-save: "+q.error.message);return}
+    if(q.error){drawForm("Could not save: "+q.error.message);return}
     $("songform").classList.add("hide");await load();
   }
 });
@@ -192,21 +197,21 @@ $("songform").addEventListener("click",async function(e){
 function renderLib(){
   $("lib").innerHTML=STEPS.map(function(s){
     if(!user)return"<tr><td>"+esc(s.name)+"</td><td><b>"+esc(s.short)+"</b></td><td></td></tr>";
-    return'<tr data-sid="'+s.id+'"><td><input class="search" data-n value="'+esc(s.name)+'" aria-label="Pangalan"></td><td><input class="search" data-sh maxlength="4" value="'+esc(s.short)+'" aria-label="Short" style="max-width:80px"></td><td><button class="small" type="button" data-ssave="'+s.id+'">Save</button></td></tr>';
+    return'<tr data-sid="'+s.id+'"><td><input class="search" data-n value="'+esc(s.name)+'" aria-label="Name"></td><td><input class="search" data-sh maxlength="8" value="'+esc(s.short)+'" aria-label="Abbreviation" style="max-width:100px"></td><td><button class="small" type="button" data-ssave="'+s.id+'">Save</button></td></tr>';
   }).join("");
 }
 $("lib").addEventListener("click",async function(e){
   var b=e.target.closest("[data-ssave]");if(!b)return;
-  var tr=b.closest("tr"),n=tr.querySelector("[data-n]").value.trim(),sh=tr.querySelector("[data-sh]").value.trim().toUpperCase();
-  if(!n||!sh){msg("Kailangan ang pangalan at short.");return}
+  var tr=b.closest("tr"),n=tr.querySelector("[data-n]").value.trim(),sh=tr.querySelector("[data-sh]").value.trim();
+  if(!n||!sh){msg("Name and abbreviation are required.");return}
   var r=await sb.from("steps").update({name:n,short:sh}).eq("id",Number(b.dataset.ssave));
-  if(r.error){msg("Hindi na-save: "+r.error.message);return}
+  if(r.error){msg("Could not save: "+r.error.message);return}
   msg("");await load();
 });
 $("sadd").onclick=async function(){
-  var n=$("sn").value.trim(),c=$("sc").value.trim().toUpperCase();if(!n||!c)return;
+  var n=$("sn").value.trim(),c=$("sc").value.trim();if(!n||!c)return;
   var r=await sb.from("steps").insert({name:n,short:c});
-  if(r.error){msg("Hindi na-dagdag: "+r.error.message);return}
+  if(r.error){msg("Could not add: "+r.error.message);return}
   $("sn").value="";$("sc").value="";msg("");await load();
 };
 
@@ -214,7 +219,7 @@ $("sadd").onclick=async function(){
 function songHTML(x){
   var l="";
   ORDER.forEach(function(k){var a=x.sec&&x.sec[k];if(!a||!a.length)return;
-    var line=esc(k+": "+a.map(function(id){return S[id]?S[id].short:"?"}).join(" "));
+    var line=esc(k+": "+a.map(function(id){return S[id]?S[id].short:"?"}).join(", "));
     l+="<div>"+(k==="C"?"<u>"+line+"</u>":line)+"</div>";
   });
   return'<div class="ps"><b>'+esc(x.title.toUpperCase())+"</b>"+l+"</div>";
@@ -225,14 +230,14 @@ function renderSched(){
     SONGS.forEach(function(x){
       if(sched.indexOf(x.id)>-1)return;
       if((x.title+" "+x.singer).toLowerCase().indexOf(t)<0)return;
-      h+='<div class="row"><span class="grow"><b>'+esc(x.title)+'</b><br><span class="m">'+esc(x.singer)+" \u00b7 "+x.cat+" "+x.lang+'</span></span><button class="small primary" type="button" data-add="'+x.id+'">Dagdag</button></div>';
+      h+='<div class="row"><span class="grow"><b>'+esc(x.title)+'</b><br><span class="m">'+esc(x.singer)+" \u00b7 "+x.cat+" "+x.lang+'</span></span><button class="small primary" type="button" data-add="'+x.id+'">Add</button></div>';
     });
-    if(!h)h='<p class="m">Walang nahanap, o nasa schedule na.</p>';
+    if(!h)h='<p class="m">No results, or already in the schedule.</p>';
   }
   $("results").innerHTML=h;
-  $("added").innerHTML=(sched.length?'<p class="m" style="margin:12px 0 0">Nasa schedule ('+sched.length+")</p>":'<p class="m">Wala pang kanta. Maghanap sa taas para magdagdag.</p>')+
+  $("added").innerHTML=(sched.length?'<p class="m" style="margin:12px 0 0">In schedule ('+sched.length+")</p>":'<p class="m">No songs yet. Search above to add one.</p>')+
     sched.map(function(id,k){var x=song(id);
-      return'<div class="row"><span class="grow"><b>'+esc(x.title)+'</b> <span class="m">'+x.cat+" "+x.lang+'</span></span><button class="small" type="button" data-up="'+k+'" aria-label="Itaas">\u2191</button><button class="small" type="button" data-down="'+k+'" aria-label="Ibaba">\u2193</button><button class="small" type="button" data-rm="'+k+'" aria-label="Alisin">\u2715</button></div>';
+      return'<div class="row"><span class="grow"><b>'+esc(x.title)+'</b> <span class="m">'+x.cat+" "+x.lang+'</span></span><button class="small" type="button" data-up="'+k+'" aria-label="Move up">\u2191</button><button class="small" type="button" data-down="'+k+'" aria-label="Move down">\u2193</button><button class="small" type="button" data-rm="'+k+'" aria-label="Remove">\u2715</button></div>';
     }).join("");
   var P="",W="";
   sched.forEach(function(id){var x=song(id);if(x.cat==="Praise")P+=songHTML(x);else W+=songHTML(x)});
