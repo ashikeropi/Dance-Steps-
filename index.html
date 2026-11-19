@@ -25,7 +25,7 @@
 <dialog id="loginbox" aria-labelledby="ltitle">
   <form id="loginform">
     <b id="ltitle">Log-in</b>
-    <input class="search" id="em" type="email" placeholder="Email" aria-label="Email" autocomplete="username" required>
+    <input class="search" id="em" type="text" placeholder="Name" aria-label="Name" autocomplete="username" autocapitalize="none" required>
     <input class="search" id="pw" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" required>
     <p class="err" id="lerr" role="alert"></p>
     <div class="actions">
@@ -77,6 +77,9 @@ var SUPABASE_URL="https://gdbwuoyluexmuwrmrmxz.supabase.co";
 var SUPABASE_KEY="sb_publishable_naZ7MVa6whcAQ6jPFbFrHg_ncTl71UI";
 
 var sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+/* People log in with a name. It becomes name@DOMAIN behind the scenes (create users in Supabase with that email). */
+var DOMAIN="dance-ministry.com";
+function toEmail(n){n=n.trim().toLowerCase();return n.indexOf("@")>-1?n:n.replace(/\s+/g,".")+"@"+DOMAIN}
 var ORDER=["I","V","PC","C","PoC","B"],FULL={I:"Instrumental",V:"Verse",PC:"Pre-chorus",C:"Chorus",PoC:"Post-chorus",B:"Bridge"},OPT={I:1,PC:1,PoC:1};
 var STEPS=[],S={},SONGS=[],user=null,view="songs",cat="All",openId=null,editId=null,draft=null,sched=[];
 try{sched=JSON.parse(localStorage.getItem("sched")||"[]")}catch(e){}
@@ -117,7 +120,7 @@ $("tabs").addEventListener("click",async function(e){
 
 /* login */
 function applyUser(){
-  $("who").textContent=user?"Logged in: "+(user.email||"editor"):"Guest (view only)";
+  $("who").textContent=user?"Logged in: "+(user.email?user.email.split("@")[0]:"editor"):"Guest (view only)";
   renderTabs();
   $("login").textContent=user?"Log-out":"Log-in";
   if($("loginbox").open)$("loginbox").close();
@@ -127,8 +130,8 @@ function applyUser(){
 }
 $("loginform").addEventListener("submit",async function(e){
   e.preventDefault();
-  var r=await sb.auth.signInWithPassword({email:$("em").value.trim(),password:$("pw").value});
-  if(r.error){$("lerr").textContent="Could not log in: "+r.error.message;return}
+  var r=await sb.auth.signInWithPassword({email:toEmail($("em").value),password:$("pw").value});
+  if(r.error){$("lerr").textContent="Could not log in. Check your name and password.";return}
   $("lerr").textContent="";$("pw").value="";$("loginbox").close();
 });
 $("login").onclick=async function(){
