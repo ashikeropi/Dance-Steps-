@@ -9,10 +9,14 @@
 </head>
 <body>
 <main>
-<h1>Steps Catalogue</h1>
-<div class="filter" style="justify-content:space-between">
-  <span class="m" id="who">Guest (view only)</span>
-  <button id="login" type="button">Log-in</button>
+<header>
+  <p class="hello" id="who">Guest (view only)</p>
+  <h1>Steps Catalogue</h1>
+</header>
+<div class="hero">
+  <span class="hl">LIBRARY</span>
+  <div class="big"><span id="ncount">0</span><small> songs</small></div>
+  <p id="nsteps">0 steps ready to use</p>
 </div>
 
 <dialog id="loginbox" aria-labelledby="ltitle">
@@ -29,7 +33,7 @@
 </dialog>
 
 <p class="err" id="msg" role="alert"></p>
-<div class="tabs" role="group" aria-label="Choose a view" id="tabs"></div>
+<nav class="bottomnav" aria-label="Main" id="tabs"></nav>
 
 <section id="view-songs">
   <p class="hide" id="addsong"><button class="primary" id="addsongbtn" type="button">+ Add New Song</button></p>
@@ -87,29 +91,38 @@ async function load(){
   sched=sched.filter(function(id){return song(id)});
   msg("");renderAll();
 }
-function renderAll(){renderSongs();renderLib();renderSched()}
+function renderAll(){renderSongs();renderLib();renderSched();$("ncount").textContent=SONGS.length;$("nsteps").textContent=STEPS.length+" steps ready to use"}
 
 /* tabs */
+var ICON={
+ songs:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>',
+ steps:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>',
+ sched:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
+ account:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>'
+};
 function renderTabs(){
-  var h=[["songs","Songs"],["steps","Steps library"],["sched","Schedule / PDF"]].map(function(x){return'<button type="button" data-v="'+x[0]+'" aria-pressed="'+(view===x[0])+'">'+x[1]+"</button>"}).join("");
-  $("tabs").innerHTML=h;
+  var item=function(v,label){return'<button type="button" class="nav" data-v="'+v+'"'+(v!=="account"?' aria-pressed="'+(view===v)+'"':"")+'>'+ICON[v]+"<span>"+label+"</span></button>"};
+  $("tabs").innerHTML=item("songs","Songs")+item("steps","Steps")+
+    (user?'<button type="button" class="fab" data-v="add" aria-label="Add new song">+</button>':"")+
+    item("sched","Schedule")+item("account",user?"Log-out":"Log-in");
   ["songs","steps","sched"].forEach(function(v){$("view-"+v).classList.toggle("hide",v!==view)});
 }
-$("tabs").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;view=b.dataset.v;renderTabs()});
+$("tabs").addEventListener("click",async function(e){
+  var b=e.target.closest("button");if(!b)return;var v=b.dataset.v;
+  if(v==="account"){if(user){await sb.auth.signOut()}else{$("lerr").textContent="";$("loginbox").showModal()}return}
+  if(v==="add"){view="songs";renderTabs();openForm(null);return}
+  view=v;renderTabs();window.scrollTo({top:0});
+});
 
 /* login */
 function applyUser(){
   $("who").textContent=user?"Logged in: "+(user.email||"editor"):"Guest (view only)";
-  $("login").textContent=user?"Log-out":"Log-in";
+  renderTabs();
   if($("loginbox").open)$("loginbox").close();
   ["addsong","stepform"].forEach(function(i){$(i).classList.toggle("hide",!user)});
   if(!user)$("songform").classList.add("hide");
   renderAll();
 }
-$("login").onclick=async function(){
-  if(user){await sb.auth.signOut()}
-  else{$("lerr").textContent="";$("loginbox").showModal()}
-};
 $("loginform").addEventListener("submit",async function(e){
   e.preventDefault();
   var r=await sb.auth.signInWithPassword({email:$("em").value.trim(),password:$("pw").value});
@@ -125,7 +138,7 @@ CATS.forEach(function(c){$("cat").add(new Option(c,c))});
 $("cat").onchange=function(){cat=this.value;openId=null;renderSongs()};
 function stepPills(ids){return ids.map(function(id){var s=S[id];return s?'<span class="pill"><i>'+esc(s.short)+"</i>"+esc(s.name)+"</span>":""}).join("")}
 function renderSongs(){
-  var h="";
+  var h="",n=0;
   SONGS.forEach(function(x){
     if(cat!=="All"&&cat!==x.cat+" "+x.lang)return;
     var o=openId===x.id,body="";
@@ -134,7 +147,7 @@ function renderSongs(){
       ORDER.forEach(function(k){var a=x.sec&&x.sec[k];if(a&&a.length)body+='<div class="sec"><b>'+k+"</b><div>"+stepPills(a)+"</div></div>"});
       if(x.lyrics)body+='<details class="lyr"><summary>Lyrics</summary><pre>'+esc(x.lyrics)+"</pre></details>";
     }
-    h+='<div class="card"><button class="song-head" type="button" aria-expanded="'+o+'" data-id="'+x.id+'"><span class="t">'+esc(x.title)+'</span><span class="m">'+esc(x.singer)+" \u00b7 "+x.cat+" "+x.lang+"</span></button>"+body+"</div>";
+    h+='<div class="card"><button class="song-head" type="button" aria-expanded="'+o+'" data-id="'+x.id+'"><span class="num">'+(++n)+'</span><span class="mid"><span class="t">'+esc(x.title)+'</span><span class="m">'+esc(x.singer)+" \u00b7 "+x.cat+" "+x.lang+"</span></span><span class=\"chev\" aria-hidden=\"true\">\u203a</span></button>"+body+"</div>";
   });
   $("songs").innerHTML=h||'<p class="m">No songs yet.</p>';
 }
