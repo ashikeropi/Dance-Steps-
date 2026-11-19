@@ -14,13 +14,19 @@
   <span class="m" id="who">Guest (view only)</span>
   <button id="login" type="button">Log-in</button>
 </div>
-<div class="card hide" id="loginbox"><b>Log-in</b>
-  <input class="search" id="em" type="email" placeholder="Email" aria-label="Email" autocomplete="username" style="margin-top:8px">
-  <input class="search" id="pw" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" style="margin-top:8px">
-  <p style="margin:10px 0 0">
-    <button class="primary" id="go" type="button">Pasok</button>
-  </p>
-</div>
+
+  <dialog id="loginbox" aria-labelledby="ltitle">
+  <form id="loginform">
+    <b id="ltitle">Log-in</b>
+    <input class="search" id="em" type="email" placeholder="Email" aria-label="Email" autocomplete="username" required>
+    <input class="search" id="pw" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" required>
+    <p class="err" id="lerr" role="alert"></p>
+    <div class="actions">
+      <button class="primary" id="go" type="submit">Submit</button>
+      <button id="closelogin" type="button">Cancel</button>
+    </div>
+  </form>
+</dialog>
 <p class="err" id="msg" role="alert"></p>
 <div class="tabs" role="group" aria-label="Pumili ng view" id="tabs">
 </div>
@@ -34,8 +40,8 @@
 
 <section id="view-steps" class="hide">
   <div class="card hide" id="stepform"><b>New Step</b><div class="filter" style="margin:8px 0 0">
-    <input class="search" id="sn" placeholder="Pangalan (hal. Step touch)" aria-label="Pangalan ng step">
-    <input class="search" id="sc" placeholder="Short" maxlength="4" aria-label="Short version" style="max-width:100px">
+    <input class="search" id="sn" placeholder="Name (ex. Hallelujah A)" aria-label="Name of the step">
+    <input class="search" id="sc" placeholder="Short (ex. Hal A)" maxlength="4" aria-label="Short version" style="max-width:100px">
     <button class="primary" id="sadd" type="button">Add</button>
   </div>
   </div>
@@ -49,7 +55,7 @@
 <section id="view-sched" class="hide">
   <div class="card" id="form"><b>Create a schedule</b>
     <label class="m" for="sq" style="display:block;margin:8px 0 4px">Search songs</label>
-    <input class="search" id="sq" type="search" placeholder="Title o singer" autocomplete="off">
+    <input class="search" id="sq" type="search" placeholder="Title or Singer" autocomplete="off">
     <div id="results"></div><div id="added"></div></div>
   <p class="m">Preview:</p>
   <div class="paper" id="paper"></div>
