@@ -45,6 +45,15 @@ main{
  margin:0 0 2px;
  color:var(--muted);
  font-size:.9rem}
+.top{
+ display:flex;
+ justify-content:space-between;
+ align-items:flex-start;
+ gap:12px}
+.top button{
+ margin-top:4px;
+ white-space:nowrap;
+ background:var(--surface)}
 h1{
  font:800 clamp(1.8rem,8vw,2.6rem)/1 "Bricolage Grotesque",system-ui,sans-serif;
  margin:0 0 16px;
@@ -157,7 +166,9 @@ a:focus-visible{
  color:#fff;
  font:400 2rem/54px "DM Sans",sans-serif;
  text-align:center;
- margin-top:-30px;
+ position:absolute;
+ right:8px;
+ bottom:calc(100% + 12px);
  box-shadow:var(--shadow);
  cursor:pointer}
 .card{
