@@ -3,33 +3,55 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Steps per Song</title>
+<title>Dance Ministry</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
-<h1>Steps per Song</h1>
-<div class="filter" style="justify-content:space-between"><span class="m" id="who">Hindi naka-login (view only)</span><button id="login" type="button">Mag-login</button></div>
-<div class="card hide" id="loginbox"><b>Mag-login</b><input class="search" id="em" type="email" placeholder="Email" aria-label="Email" autocomplete="username" style="margin-top:8px"><input class="search" id="pw" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" style="margin-top:8px"><p style="margin:10px 0 0"><button class="primary" id="go" type="button">Pasok</button></p></div>
+<h1>Steps Catalogue</h1>
+<div class="filter" style="justify-content:space-between">
+  <span class="m" id="who">Guest (view only)</span>
+  <button id="login" type="button">Log-in</button>
+</div>
+<div class="card hide" id="loginbox"><b>Log-in</b>
+  <input class="search" id="em" type="email" placeholder="Email" aria-label="Email" autocomplete="username" style="margin-top:8px">
+  <input class="search" id="pw" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" style="margin-top:8px">
+  <p style="margin:10px 0 0">
+    <button class="primary" id="go" type="button">Pasok</button>
+  </p>
+</div>
 <p class="err" id="msg" role="alert"></p>
-<div class="tabs" role="group" aria-label="Pumili ng view" id="tabs"></div>
+<div class="tabs" role="group" aria-label="Pumili ng view" id="tabs">
+</div>
 
 <section id="view-songs">
-  <p class="hide" id="addsong"><button class="primary" id="addsongbtn" type="button">+ Bagong kanta</button></p>
+  <p class="hide" id="addsong"><button class="primary" id="addsongbtn" type="button">+ Add New Song</button></p>
   <div class="card hide" id="songform"></div>
   <div class="filter"><label for="cat">Category</label><select id="cat"></select></div>
   <div id="songs"></div>
 </section>
 
 <section id="view-steps" class="hide">
-  <div class="card hide" id="stepform"><b>Bagong step</b><div class="filter" style="margin:8px 0 0"><input class="search" id="sn" placeholder="Pangalan (hal. Step touch)" aria-label="Pangalan ng step"><input class="search" id="sc" placeholder="Short" maxlength="4" aria-label="Short version" style="max-width:100px"><button class="primary" id="sadd" type="button">Dagdag</button></div></div>
-  <div class="card"><table><thead><tr><th>Step</th><th>Short</th><th></th></tr></thead><tbody id="lib"></tbody></table></div>
+  <div class="card hide" id="stepform"><b>New Step</b><div class="filter" style="margin:8px 0 0">
+    <input class="search" id="sn" placeholder="Pangalan (hal. Step touch)" aria-label="Pangalan ng step">
+    <input class="search" id="sc" placeholder="Short" maxlength="4" aria-label="Short version" style="max-width:100px">
+    <button class="primary" id="sadd" type="button">Add</button>
+  </div>
+  </div>
+  <div class="card"><table><thead><tr>
+    <th>Name of the Step</th>
+    <th>Abbreviation</th>
+    <th></th></tr></thead><tbody id="lib"></tbody></table>
+  </div>
 </section>
 
 <section id="view-sched" class="hide">
-  <div class="card" id="form"><b>Gumawa ng schedule</b><label class="m" for="sq" style="display:block;margin:8px 0 4px">Hanapin ang kanta</label><input class="search" id="sq" type="search" placeholder="Title o singer" autocomplete="off"><div id="results"></div><div id="added"></div></div>
-  <p class="m">Ito ang lalabas sa PDF (legal size, title at short steps lang):</p>
+  <div class="card" id="form"><b>Create a schedule</b>
+    <label class="m" for="sq" style="display:block;margin:8px 0 4px">Search songs</label>
+    <input class="search" id="sq" type="search" placeholder="Title o singer" autocomplete="off">
+    <div id="results"></div><div id="added"></div></div>
+  <p class="m">Preview:</p>
   <div class="paper" id="paper"></div>
   <p><button class="primary" id="print" type="button">Download PDF / Print</button></p>
 </section>
