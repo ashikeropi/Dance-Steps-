@@ -10,16 +10,41 @@
 <body>
 <main>
 <header class="top">
-  <div>
+  <div class="brand">
     <p class="hello" id="who">Guest (view only)</p>
-    <h1>Steps Catalogue</h1>
+    <h1>Dance Ministry <span>✦</span></h1>
   </div>
-  <button id="login" type="button">Log-in</button>
+  <div class="top-actions">
+    <button id="login" type="button">Log-in</button>
+  </div>
 </header>
+
+<div class="welcome">
+  <p class="welcome-title">Welcome to your library ♡</p>
+  <p class="welcome-sub">Find songs, steps, and schedules in one place.</p>
+</div>
+
+<div class="search-wrap">
+  <span aria-hidden="true">⌕</span>
+  <input id="quick-search" class="search quick-search" type="search"
+         placeholder="Search songs or singers..." aria-label="Search songs or singers">
+</div>
+
 <div class="hero">
-  <span class="hl">LIBRARY</span>
-  <div class="big"><span id="ncount">0</span><small> songs</small></div>
-  <p id="nsteps">0 steps ready to use</p>
+  <div class="hero-copy">
+    <span class="hl">DANCE LIBRARY</span>
+    <div class="big"><span id="ncount">0</span><small> songs</small></div>
+    <p id="nsteps">0 steps ready to use</p>
+  </div>
+  <div class="hero-icon" aria-hidden="true">♪</div>
+</div>
+
+<div class="category-strip" aria-label="Song categories">
+  <button class="cat-chip active" type="button" data-cat="All">All</button>
+  <button class="cat-chip" type="button" data-cat="Praise ENG">Praise</button>
+  <button class="cat-chip" type="button" data-cat="Praise TAG">Tagalog</button>
+  <button class="cat-chip" type="button" data-cat="Worship ENG">Worship</button>
+  <button class="cat-chip" type="button" data-cat="Worship TAG">TAG Worship</button>
 </div>
 
 <dialog id="loginbox" aria-labelledby="ltitle">
@@ -144,7 +169,26 @@ sb.auth.onAuthStateChange(function(ev,s){user=s?s.user:null;applyUser()});
 /* songs */
 var CATS=["All","Praise ENG","Praise TAG","Worship ENG","Worship TAG"];
 CATS.forEach(function(c){$("cat").add(new Option(c,c))});
-$("cat").onchange=function(){cat=this.value;openId=null;renderSongs()};
+$("cat").onchange=function(){
+  cat=this.value;openId=null;renderSongs();
+  document.querySelectorAll(".cat-chip").forEach(function(b){
+    b.classList.toggle("active",b.dataset.cat===cat);
+  });
+};
+document.querySelectorAll(".cat-chip").forEach(function(b){
+  b.onclick=function(){
+    $("cat").value=b.dataset.cat;
+    $("cat").dispatchEvent(new Event("change"));
+  };
+});
+var quick=$("quick-search");
+if(quick)quick.addEventListener("input",function(){
+  var q=this.value.trim().toLowerCase();
+  document.querySelectorAll("#songs .card").forEach(function(card){
+    var text=card.textContent.toLowerCase();
+    card.style.display=(!q||text.indexOf(q)>-1)?"":"none";
+  });
+});
 function stepPills(ids){return ids.map(function(id){var s=S[id];return s?'<span class="pill"><i>'+esc(s.short)+"</i>"+esc(s.name)+"</span>":""}).join("")}
 function renderSongs(){
   var h="",n=0;
